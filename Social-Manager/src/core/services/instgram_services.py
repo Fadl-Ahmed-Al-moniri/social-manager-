@@ -1,8 +1,9 @@
 from datetime import datetime
 import time
-from typing import Any, Dict, Optional
 from rest_framework.exceptions import ValidationError
 from pyfacebook.api import GraphAPI
+from typing import Optional, List, Dict, Union
+
 
 
 class InstgramService:
@@ -178,27 +179,224 @@ class InstgramService:
         except Exception as e:
             # Raise an error if something goes wrong
             raise ValueError(f"Error fetching media data: {e}")
-        
+    
+    
+    
+    @staticmethod
+    def publish_post_to_instagram(
+        access_token: str,
+        page_user_id: str,
+        media_urls: List[str],
+        caption: str,
+        user_tags: Optional[List[Dict[str, Union[str, float]]]] = None,
+        media_type: str = "IMAGE",
+        location_id: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Publish a post to Instagram (single image/video or carousel).
 
+        :param access_token: Token access with the necessary permissions.
+        :param page_user_id: Page user ID.
+        :param media_urls: List of media URLs (images or videos).
+        :param caption: Content of the post.
+        :param user_tags: List of user tags (e.g., [{"username": "user1", "x": 0.5, "y": 0.5}]).
+        :param media_type: Type of media ("IMAGE" or "VIDEO").
+        :param location_id: Location ID for tagging.
+        :return: ID of the published media.
+        """
+        try:
+            api = GraphAPI(access_token=access_token)
+            children = []
 
-def prepare_facebook_post_data(post_data, page_instance, platform_instance):
-            """
-            prepare_post_data.
-            """
-            prepared_data = {
-                "external_post_id": post_data.pop("id"),
-                "content": post_data.pop("message",""),
-                "application": post_data.pop("application", {}).get("id"),
-                "media_url": post_data.pop("full_picture", None),
-                "scheduled_at": post_data.pop("scheduled_publish_time", None),
-                "status": "published" if post_data.pop("is_published") else "draft",
-                "created_at": post_data.pop("created_time"),
-                "updated_at": post_data.pop("updated_time"),
-                "likes_count": len(post_data.pop("likes", {}).get("data", [])),
-                "comments_count": len(post_data.pop("comments", {}).get("data", [])),
-                "shares_count": post_data.pop("shares", {}).get("count", 0),
-                "social_media_account": page_instance.social_media_account.pk,
-                "platform": platform_instance.pk,
+            # Create media containers for each URL
+            for url in media_urls:
+                params = {
+                    "caption": caption,
+                    "user_tags": user_tags,
+                    "location_id": location_id,
+                }
+
+                if len(media_urls) > 1:  # Carousel post
+                    params["is_carousel_item"] = "true"
+
+                if media_type == "IMAGE":
+                    params["image_url"] = url
+                elif media_type == "VIDEO":
+                    params["video_url"] = url
+                    params["media_type"] = "VIDEO"
+
+                container = api.post_object(
+                    object_id=page_user_id,
+                    connection="media",
+                    params=params,
+                )
+                children.append(container["id"])
+
+            # Create carousel container if multiple media items
+            if len(media_urls) > 1:
+                params = {
+                    "media_type": "CAROUSEL",
+                    "children": children,
+                    "caption": caption,
+                    "user_tags": user_tags,
+                    "location_id": location_id,
+                }
+                creation_id = api.post_object(
+                    object_id=page_user_id,
+                    connection="media",
+                    params=params,
+                )
+            else:
+                creation_id = {"id": children[0]}  # Single media post
+
+            # Publish the media
+            if creation_id:
+                response = api.post_object(
+                    object_id=page_user_id,
+                    connection="media_publish",
+                    params={"creation_id": creation_id["id"]},
+                )
+                return response
+
+        except Exception as e:
+            raise ValueError(f"Error publishing post: {e}")
+    @staticmethod
+    def publish_reel_to_instagram(
+        access_token: str,
+        page_user_id: str,
+        video_url: str,
+        caption: str,
+        user_tags: Optional[List[Dict[str, Union[str, float]]]] = None,
+        location_id: Optional[str] = None,
+        max_retries: int = 20,
+        wait_time: int = 30,
+    ) -> Optional[str]:
+        """
+        Publish a Reel to Instagram with retry logic for media processing.
+
+        :param access_token: Token access with the necessary permissions.
+        :param page_user_id: Page user ID.
+        :param video_url: Direct URL to the video file.
+        :param caption: Content of the post.
+        :param user_tags: List of user tags.
+        :param location_id: Location ID for tagging.
+        :param max_retries: Maximum number of retries for media processing.
+        :param wait_time: Time to wait between retries (in seconds).
+        :return: ID of the published Reel.
+        """
+        try:
+            api = GraphAPI(access_token=access_token)
+
+            # Step 1: Create media container
+            params = {
+                "video_url": video_url,
+                "caption": caption,
+                "user_tags": user_tags,
+                "location_id": location_id,
+                "media_type": "REELS",
             }
-            return prepared_data
+
+            creation_id = api.post_object(
+                object_id=page_user_id,
+                connection="media",
+                params=params,
+            )
+
+            if not creation_id or "id" not in creation_id:
+                raise ValueError("Failed to create media container.")
+
+            container_id = creation_id["id"]
+
+            # Step 2: Wait for media to be ready
+            retries = 0
+            while retries < max_retries:
+                container_status = api.get_object(
+                    object_id=container_id,
+                    fields="status_code",
+                )
+
+                if container_status.get("status_code") == "FINISHED":
+                    print("break")
+                    break  # Media is ready
+                elif container_status.get("status_code") == "ERROR":
+                    raise ValueError("Media processing failed.")
+
+                retries += 1
+                print(f"Waiting for media to process... Attempt {retries}/{max_retries}")
+                time.sleep(wait_time)  # Wait before retrying
+
+            if retries >= max_retries:
+                raise ValueError("Media processing timed out.")
+
+            # Step 3: Publish the media
+            response = api.post_object(
+                object_id=page_user_id,
+                connection="media_publish",
+                params={"creation_id": container_id},
+            )
+            if response["id"] :
+                reel_url = api.get_object(object_id=response["id"] ,access_token = access_token ,fields="media_url")
+
+                response["video_url"] = reel_url["media_url"]
+            
+            return response
+
+        except Exception as e:
+            raise ValueError(f"Error publishing Reel: {e}")
+
+
+
+    @staticmethod
+    def publish_story_to_instagram(
+        access_token: str,
+        page_user_id: str,
+        media_url: str,
+        caption: str,
+        user_tags: Optional[List[Dict[str, Union[str, float]]]] = None,
+        media_type: str = "IMAGE",
+    )-> Optional[str]:
+        """
+        Publish a Story to Instagram.
+
+        :param access_token: Token access with the necessary permissions.
+        :param page_user_id: Page user ID.
+        :param media_url: Media URL (image or video).
+        :param caption: Content of the post.
+        :param user_tags: List of user tags.
+        :param media_type: Type of media ("IMAGE" or "VIDEO").
+        :return: ID of the published Story.
+        """
+        try:
+            api = GraphAPI(access_token=access_token)
+
+            params = {
+                "caption": caption,
+                "user_tags": user_tags,
+                "media_type": "STORIES",
+            }
+
+            if media_type == "IMAGE":
+                params["image_url"] = media_url
+            elif media_type == "VIDEO":
+                params["video_url"] = media_url
+
+            creation_id = api.post_object(
+                object_id=page_user_id,
+                connection="media",
+                params=params,
+            )
+
+            if creation_id:
+                response = api.post_object(
+                    object_id=page_user_id,
+                    connection="media_publish",
+                    params={"creation_id": creation_id["id"]},
+                )
+                return response["id"]
+
+        except Exception as e:
+            raise ValueError(f"Error publishing Story: {e}")
+
+
+
 

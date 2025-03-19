@@ -74,11 +74,11 @@ class CustomUserManager(BaseUserManager):
 
 
 class UserModel(AbstractBaseUser, PermissionsMixin):
-    def get_default_role():
-        def _get_default_role():
-            role, created = Role.objects.get_or_create(name="Social Media Owner")
-            return role.pk
-        return _get_default_role
+    # def get_default_role():
+    #     def _get_default_role():
+    #         role, created = Role.objects.get_or_create(name="Social Media Owner")
+    #         return role.pk
+    #     return _get_default_role
 
     username = models.CharField(max_length=255)
     email = models.EmailField(unique=True)

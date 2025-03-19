@@ -36,11 +36,33 @@ class FacebookUserModelView(viewsets.ViewSet):
         userinfo = get_user_from_token(request)
         try:
             facebook_user_access_token  = request.data.get("facebook_user_access_token")
-            facebook_user_id  = request.data.get("facebook_user_id")
-            data = FacebookService.fetch_facebook_user_info(
-                user_access_token=facebook_user_access_token
-                ,facebook_user_id=facebook_user_id)
-            return create_response(data= data, status_code=status.HTTP_200_OK)
+            if facebook_user_access_token :
+                print(facebook_user_access_token)
+                data = FacebookService.fetch_facebook_user_info(
+                    user_access_token=facebook_user_access_token
+                    )
+                return create_response(data= data, status_code=status.HTTP_200_OK)
+            return create_response(errors="errors", message="This field facebook_user_access_token is required.", status_code=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return create_response(errors="errors", message=str(e), status_code=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+    @decorators.action(detail=False, methods=["post"], url_path="long_access_token")
+    def long_access_token(self, request):
+        userinfo = get_user_from_token(request)
+        try:
+            access_token  = request.data.get("access_token")
+            if access_token :
+                print(access_token)
+                data = FacebookService.get_long_lived_access_token(
+                    short_lived_access_token=access_token
+                    )
+                return create_response(data= data, status_code=status.HTTP_200_OK)
+            return create_response(errors="errors", message="This field facebook_user_access_token is required.", status_code=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return create_response(errors="errors", message=str(e), status_code=status.HTTP_400_BAD_REQUEST)
     
@@ -59,7 +81,8 @@ class FacebookUserModelView(viewsets.ViewSet):
             print(social_account)
             data["social_media_account"] = social_account.pk
             print(f"social_account: {social_account}")
-    
+            long_acess_token = FacebookService.get_long_lived_access_token(request.data.get("facebook_user_access_token"))
+            data["facebook_user_access_token"] = long_acess_token
             serializers = FacebookUserModelSerializer(data= data,context={'request': request, "view_action": "post"})
             if serializers.is_valid():
                 if not FacebookUserModel.objects.filter(social_media_account =social_account ,facebook_user_id =request.data.get("facebook_user_id") ).exists():
@@ -70,7 +93,7 @@ class FacebookUserModelView(viewsets.ViewSet):
                 print(fr"facebook_user_model:  {facebook_user_model}")
                 page_ids = request.data.get("page_ids", [])
                 print(rf"print{(page_ids)}")
-                saved_pages = connect_facebook_pages(userinfo,request.data.get("facebook_user_access_token"), facebook_user_model, page_ids , platform_facebook)
+                saved_pages = connect_facebook_pages(userinfo,long_acess_token, facebook_user_model, page_ids , platform_facebook)
 
                 return create_response(data={"facebook_user": FacebookUserModelSerializer(facebook_user_model).data, "pages": saved_pages}, message="Connected successfully", status_code=status.HTTP_201_CREATED)
             return create_response(errors="errors", message=serializers.errors, status_code=status.HTTP_400_BAD_REQUEST)        

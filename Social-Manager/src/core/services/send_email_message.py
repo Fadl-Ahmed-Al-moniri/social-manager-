@@ -8,7 +8,6 @@ from user.models import UserModel
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-
 def send_email_message(user, reverse_viewname, title, content):
     try:
         validate_email(user.email)

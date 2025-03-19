@@ -20,6 +20,11 @@ class PostModle(models.Model):
     application= models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField(blank=True, null=True)
     media_url = models.TextField(blank=True, null=True)
+    media_type= models.CharField(max_length=255,blank=True, null=True)
+    publish_type= models.CharField(max_length=255,blank=True, null=True)
+    links= models.JSONField(blank=True, null=True)
+    hashtags= models.JSONField(blank=True, null=True)
+    tags = models.JSONField(blank=True, null=True)
     scheduled_at = models.BigIntegerField(blank=True, null=True)
 
     STATUS_CHOICES = [

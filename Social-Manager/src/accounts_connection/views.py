@@ -9,7 +9,11 @@ from core.services.get_user_from_token import get_user_from_token
 from core.services.create_response import  create_response 
 from django.shortcuts import get_object_or_404
 from core.permission.permissions import HasPermissionEmployee , ISManager , EmailVerifiedPermission , IsOwnerOrManager  , IsOwner
-# Create your viewsets here.
+# from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+# import requests
+# from dj_rest_auth.registration.views import SocialLoginView
+
 
 class PlatformView(viewsets.ViewSet):
     serializer_class = PlatformSerializer
@@ -169,3 +173,33 @@ class SocialMediaAccountView(viewsets.ViewSet):
     #             message="An error occurred",
     #             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     #         )
+
+
+
+# class FacebookLogin(SocialLoginView):
+#     adapter_class = FacebookOAuth2Adapter
+#     client_class = OAuth2Client
+#     callback_url = 'https://localhost:8000/rest-auth/facebook/' 
+
+
+
+# @decorators.api_view(http_method_names=["POST"])
+# def get_facebook_access_token(request):
+#     url = "https://graph.facebook.com/v12.0/oauth/access_token"
+#     params = {
+#         'client_id': "478183998355970",
+#         'client_secret': "d9ce01b7673e4d96789012716339a1be",
+#         'redirect_uri': "https://localhost:8000/rest-auth/facebook",
+#         'code': request.data.get("code"),
+#     }
+
+#     try:
+#         response = requests.get(url, params=params)
+#         response.raise_for_status()  # يرفع استثناء إذا كان هناك خطأ في الطلب
+#         return create_response(data=f"{response.json()}")  # يحتوي على access_token
+#     except requests.exceptions.HTTPError as err:
+#         print(f"HTTP Error: {err}")
+#         print(f"Response: {response.json()}")
+#         return create_response(errors="dsfsf",message=response.json())
+#     except Exception as err:
+#         return create_response(errors="dsfsf",message=err)

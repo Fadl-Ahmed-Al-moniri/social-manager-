@@ -2,18 +2,8 @@ from rest_framework import serializers
 from core.services.facebook_services import FacebookService
 from accounts_connection.models import SocialMediaAccount
 from .models import FacebookUserModel , FacebookPageModel
+from core.utils.convert_data_type import ListToStringField
 
-class ListToStringField(serializers.Field):
-    def to_representation(self, value):
-        if value:
-            return value.split(",")
-        return []
-
-    def to_internal_value(self, data):
-        if isinstance(data, list):
-            return ",".join(data)
-        raise serializers.ValidationError("Expected a list of strings.")
-    
 class FacebookUserModelSerializer(serializers.ModelSerializer):
 
     class Meta:

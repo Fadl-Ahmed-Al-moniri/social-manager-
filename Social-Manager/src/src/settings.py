@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,6 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-qly4pm5ysoem^(##_wqd2b^=_*v(-0x_w4#v1bus#+#gp-3lup'
+FACEBOOK_APP_ID= '478183998355970'
+FACEBOOK_APP_SECRET  = 'd9ce01b7673e4d96789012716339a1be'
+FACEBOOK_GRAPH_API_VERSION = "v20.0"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,6 +40,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'socialmanager102@gmail.com'
 EMAIL_HOST_PASSWORD = 'xryp hlkk ufdt dlek'
 FRONTEND_URL = 'http://127.0.0.1:8000'  # عنوان الواجهة الأمامية حيث سيتم توجيه المستخدم
+SSL_CERTIFICATE = os.path.join(BASE_DIR, 'certs', 'localhost.pem')
+SSL_PRIVATE_KEY = os.path.join(BASE_DIR, 'certs', 'localhost-key.pem')
+
+SECURE_SSL_REDIRECT = True  # تحويل جميع الطلبات إلى HTTPS
+SESSION_COOKIE_SECURE = True  # تأمين ملفات تعريف الارتباط
+CSRF_COOKIE_SECURE = True  # تأمين ملفات تعريف الارتباط الخاصة بـ CSRF
 
 # Application definition
 
@@ -52,9 +62,19 @@ INSTALLED_APPS = [
     "accounts_connection",
     "platform_media",
     "posts",
+    'corsheaders',
+    'sslserver',
+    'django_extensions',
+    # 'dj_rest_auth',
+    # 'dj_rest_auth.registration',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.facebook',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,6 +82,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'allauth.account.middleware.AccountMiddleware'
 ]
 
 ROOT_URLCONF = 'src.urls'
@@ -81,6 +102,74 @@ TEMPLATES = [
         },
     },
 ]
+
+
+# AUTHENTICATION_BACKENDS = [
+#     'django.contrib.auth.backends.ModelBackend',
+#     'allauth.account.auth_backends.AuthenticationBackend',
+# ]
+
+
+
+
+# SOCIALACCOUNT_PROVIDERS  = {
+#     'facebook': {
+#         # For each OAuth based provider, either add a ``SocialApp``
+#         # (``socialaccount`` app) containing the required client
+#         # credentials, or list them here:
+#         'APP': {
+#             'client_id': '478183998355970',
+#             'secret': 'd9ce01b7673e4d96789012716339a1be',
+#             'key': ''
+#         },
+#         'SCOPE': [
+#                         "email",
+#                         "manage_fundraisers",
+#                         "read_insights",
+#                         "publish_video",
+#                         "catalog_management",
+#                         "pages_manage_cta",
+#                         "pages_manage_instant_articles",
+#                         "pages_show_list",
+#                         "read_page_mailboxes",
+#                         "ads_management",
+#                         "ads_read",
+#                         "business_management",
+#                         "pages_messaging",
+#                         "pages_messaging_subscriptions",
+#                         "instagram_basic",
+#                         "instagram_manage_comments",
+#                         "instagram_manage_insights",
+#                         "instagram_content_publish",
+#                         "leads_retrieval",
+#                         "whatsapp_business_management",
+#                         "instagram_manage_messages",
+#                         "page_events",
+#                         "pages_read_engagement",
+#                         "pages_manage_metadata",
+#                         "pages_read_user_content",
+#                         "pages_manage_ads",
+#                         "pages_manage_posts",
+#                         "pages_manage_engagement",
+#                         "whatsapp_business_messaging",
+#                         "instagram_branded_content_brand",
+#                         "instagram_branded_content_creator",
+#                         "instagram_branded_content_ads_brand",
+#                         "instagram_manage_events",
+#                         "manage_app_solution"
+#                     ],
+#         'AUTH_PARAMS': {
+#             'auth_type': 'reauthenticate',
+#         },
+#         'METHOD': 'oauth2',  # طريقة المصادقة
+#         'VERIFIED_EMAIL': False,  # التحقق من البريد الإلكتروني
+#     }
+#     }
+
+# SITE_ID = 1
+
+# ACCOUNT_EMAIL_VERIFICATION = 'none' 
+
 
 WSGI_APPLICATION = 'src.wsgi.application'
 
@@ -115,6 +204,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:5500',  # البورت الذي يشغّل HTML
+    'http://127.0.0.1:8000', # خادم Django
+]
+
+CORS_ORIGIN_ALLOW_ALL = True
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 

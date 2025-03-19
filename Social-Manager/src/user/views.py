@@ -242,7 +242,9 @@ class PasswordResetRequestView(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetConfirmView(generics.GenericAPIView):
+    
     serializer_class = PasswordResetConfirmSerializer
+
 
     def post(self, request, uidb64=None, token=None):
         """
