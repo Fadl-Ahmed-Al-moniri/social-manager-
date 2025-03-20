@@ -18,6 +18,7 @@ from core.utils.get_current_timestamp import  get_current_timestamp
 from core.utils.prepare_facebook_posts_data import  prepare_facebook_posts_data 
 from rest_framework.serializers import ValidationError
 from django.db.models import Q
+from core.permission.permissions import ISManager , IsPublishingEmp
 from asgiref.sync import sync_to_async
 from core.utils.get_current_timestamp import get_current_timestamp
 from django.utils import timezone
@@ -28,25 +29,31 @@ from django.utils import timezone
 class PostView(viewsets.ViewSet ):
     serializer_class = PostSerializer
     authentication_classes = [TokenAuthentication]
-    # permission_classes_by_action = {
-    #     'get_info': [ISManager],    }
+    permission_classes_by_action = {
+        'get_posts_page': [ IsPublishingEmp],
+        'publish': [ IsPublishingEmp],
+    }
+    def get_permissions(self):
+        try:
+            return [permission() for permission in self.permission_classes_by_action[self.action]]
+        except KeyError:
+            return [permission() for permission in self.permission_classes]
 
-    # def get_permissions(self):
-    #     try:
-    #         return [permission() for permission in self.permission_classes_by_action[self.action]]
-    #     except KeyError:
-    #         return [permission() for permission in self.permission_classes]
 
     @decorators.action(methods=["post"], detail=False, url_path="get_posts_page")
     def get_posts_page(self, request):
         user_instance = get_user_from_token(request=request)
         print(request.data)
         try:
+            if not user_instance.manager is None:
+                    user_instance = user_instance.manager
             if PostSerializer.validate_input(attrs=request.data ,method = "get_posts_page"):
+                
                 platform_instance = Platform.objects.get(name=request.data.get("platform"))
                 
                 if platform_instance.name == "Facebook":
-                    page_instance = FacebookPageModel.objects.get(facebook_page_id=request.data.get("page_id"))
+                    social_instance =  SocialMediaAccount.objects.get(user = user_instance , external_account_id = request.data.get("page_id"))
+                    page_instance = FacebookPageModel.objects.get(social_media_account = social_instance, facebook_page_id=request.data.get("page_id"))
                     data = request.data.copy()
                     
                     data["platform"] = platform_instance.pk
@@ -88,8 +95,9 @@ class PostView(viewsets.ViewSet ):
                     )
                 
                 if platform_instance.name =="Instagram":
+                    social_instance =  SocialMediaAccount.objects.get(user = user_instance , external_account_id = request.data.get("page_id"))
+                    page_instance =InstagramModel.objects.get(social_media_account = social_instance,instagram_id=request.data.get("page_id"))
                     data = request.data.copy()
-                    page_instance =InstagramModel.objects.get(instagram_id=request.data.get("page_id"))
                     
                     data["platform"] = platform_instance.pk
                     data["social_media_account"] = page_instance.social_media_account.pk
@@ -114,10 +122,6 @@ class PostView(viewsets.ViewSet ):
                                         message=post_serializer.errors,
                                         status_code=status.HTTP_400_BAD_REQUEST
                                     )
-                        # return create_response(
-                        #     message=data,
-                        #     status_code=status.HTTP_400_BAD_REQUEST
-                        # ) 
 
                     return create_response(
                             errors="error",
@@ -194,13 +198,15 @@ class PostView(viewsets.ViewSet ):
             print(f"post_data : {request.data.get("publish_data", {})}")
 
             if publish_type =="post":
-                
+                pass
                 # تنفيذ النشر بشكل غير متزامن
-                asyncio.run(self.publish_post_async(publish_type,grouped_pages, request.data.get("publish_data", {})))
+                # asyncio.run(self.publish_post_async(publish_type,grouped_pages, request.data.get("publish_data", {})))
                 # إرجاع رسالة نجاح
             
             if publish_type =="reels":
-                asyncio.run(self.publish_reel_async(publish_type,grouped_pages, request.data.get("publish_data", {})))
+                pass
+
+                # asyncio.run(self.publish_reel_async(publish_type,grouped_pages, request.data.get("publish_data", {})))
 
             return create_response(
                 message="Posts published successfully.",

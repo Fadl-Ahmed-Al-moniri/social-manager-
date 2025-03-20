@@ -49,6 +49,60 @@ class ISManager(permissions.BasePermission):
         except AttributeError:  
             print("AttributeError: user_info might not have role attribute")
             return False
+        
+
+
+class ISManager(permissions.BasePermission):
+    message = "You do not have permission to access this page."
+
+    def has_permission(self, request,view):
+
+        print(fr"requestrequest: ${request}")
+        user_info = get_user_from_token(request)
+        print(fr"{request}")
+        if user_info is None: 
+            print("user_info is None")
+            return False
+        try:
+            if user_info.manager is None : 
+                print("Permission Granted")
+                return True
+            else:
+                print("Permission Denied: Is'nt Manager")
+                return False
+        except AttributeError:  
+            print("AttributeError: user_info might not have role attribute")
+            return False
+
+
+class IsPublishingEmp(permissions.BasePermission):
+    message = "You do not have permission to access this page."
+
+    def has_permission(self, request,view):
+
+        user_info = get_user_from_token(request)
+        print(fr"{request}")
+
+        try:
+            if user_info is None: 
+                print("user_info is None")
+                return False
+            if user_info.manager is None: 
+                print("user_info is None")
+                return True
+            role = (user_info.role.name)
+            print(f"User Role: {role}")  
+            if role  in "Publications Officer" : 
+                print("Permission Granted")
+                return True
+            else:
+                print("Permission Denied: Is'nt Manager")
+                return False
+        except AttributeError:  
+            print("AttributeError: user_info might not have role attribute")
+            return False
+
+
 
 class HasPermissionEmployee(permissions.BasePermission):
     message = "You don't have the permission to perform this operation."
