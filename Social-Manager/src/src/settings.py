@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "accounts_connection",
     "platform_media",
     "posts",
+    "interactions",
     'corsheaders',
     'sslserver',
     'django_extensions',

@@ -26,9 +26,5 @@ urlpatterns = [
     path('',include("platform_media.urls")),
     path('',include("accounts_connection.urls")),
     path('',include("posts.urls")),
-    # path('accounts/', clude('allauth.urls')),
-    # path('accounts/', include('allauth.urls')),  
-    # path('rest-auth/', include('dj_rest_auth.urls')),  
-    # path('rest-auth/registration/', include('dj_rest_auth.registration.urls')), 
-
+    path('',include("interactions.urls")),
 ]

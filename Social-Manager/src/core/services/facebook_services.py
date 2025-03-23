@@ -98,8 +98,6 @@ class FacebookService:
             print(f"Error fetching long-lived access token: {e}")
             return None
     
-    
-    
     @staticmethod
     def post(
             access_token: str, 
@@ -315,8 +313,6 @@ class FacebookService:
         except Exception as e:
             raise RuntimeError(f"An unexpected error occurred: {e}")
 
-
-
     @staticmethod 
     def update_post(access_token: str, page_post_id: str, post_message: str):
         """
@@ -452,5 +448,36 @@ class FacebookService:
         except Exception as e:
             print(f"Error occurred while fetching post ID {post_id}: {e}")
             raise RuntimeError(f"An error occurred while fetching the post: {e}")
+
+    @staticmethod
+    def get_interaction_post(access_token: str, post_id: str, fields: Optional[str] = None) -> dict:
+        """
+        Fetch detailed interaction about a specific Facebook post using its ID.
+
+        :param access_token: The access token with the required permissions.
+        :param post_id: The ID of the post to retrieve information for.
+        :param fields: Comma-separated list of fields to fetch. Defaults to commonly used fields.
+        :return: A dictionary containing the post's details.
+        :raises RuntimeError: If an error occurs while fetching the post.
+        """
+        if not access_token or not post_id:
+            raise ValueError("Access token and post ID are required and cannot be empty.")
+
+        # Initialize the Facebook Graph API
+        graph = GraphAPI(access_token=access_token)
+
+        # Default fields if not provided
+        fields = fields or "likes{id,name},comments{id,from,like_count,message,created_time,permalink_url,parent,comment_count}"
+
+        try:
+            # Make the API call
+            post_info = graph.get_object(object_id=post_id, fields=fields)
+
+            return post_info
+
+        except Exception as e:
+            print(f"Error occurred while fetching post ID {post_id}: {e}")
+            raise RuntimeError(f"An error occurred while fetching the post: {e}")
+
 
 

@@ -81,8 +81,8 @@ class FacebookUserModelView(viewsets.ViewSet):
             print(social_account)
             data["social_media_account"] = social_account.pk
             print(f"social_account: {social_account}")
-            long_acess_token = FacebookService.get_long_lived_access_token(request.data.get("facebook_user_access_token"))
-            data["facebook_user_access_token"] = long_acess_token
+            # long_acess_token = FacebookService.get_long_lived_access_token(request.data.get("facebook_user_access_token"))
+            data["facebook_user_access_token"] = request.data.get("facebook_user_access_token")
             serializers = FacebookUserModelSerializer(data= data,context={'request': request, "view_action": "post"})
             if serializers.is_valid():
                 if not FacebookUserModel.objects.filter(social_media_account =social_account ,facebook_user_id =request.data.get("facebook_user_id") ).exists():
@@ -93,7 +93,7 @@ class FacebookUserModelView(viewsets.ViewSet):
                 print(fr"facebook_user_model:  {facebook_user_model}")
                 page_ids = request.data.get("page_ids", [])
                 print(rf"print{(page_ids)}")
-                saved_pages = connect_facebook_pages(userinfo,long_acess_token, facebook_user_model, page_ids , platform_facebook)
+                saved_pages = connect_facebook_pages(userinfo,request.data.get("facebook_user_access_token"), facebook_user_model, page_ids , platform_facebook)
 
                 return create_response(data={"facebook_user": FacebookUserModelSerializer(facebook_user_model).data, "pages": saved_pages}, message="Connected successfully", status_code=status.HTTP_201_CREATED)
             return create_response(errors="errors", message=serializers.errors, status_code=status.HTTP_400_BAD_REQUEST)        

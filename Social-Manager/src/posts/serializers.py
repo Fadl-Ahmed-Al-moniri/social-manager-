@@ -6,9 +6,9 @@ from core.utils.convert_data_type import ListToStringField
 
 
 class PostSerializer(serializers.ModelSerializer):
-    media_type = ListToStringField(required=False)
-    links = ListToStringField(required=False)
-    hashtags = ListToStringField(required=False)
+    media_type = ListToStringField()
+    links = ListToStringField()
+    hashtags = ListToStringField()
     class Meta:
         model = PostModle
         fields = [
