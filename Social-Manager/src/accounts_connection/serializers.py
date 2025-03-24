@@ -23,7 +23,7 @@ class PlatformSerializer(serializers.ModelSerializer):
 class SocialMediaAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = SocialMediaAccount
-        fields = ['id', 'user', 'platform', 'external_account_id']
+        fields = ['id', 'user', 'platform', 'external_account_id' , 'account_name']
         extra_kwargs = {
             'id': {'read_only': True},
             'user': {'read_only': True},

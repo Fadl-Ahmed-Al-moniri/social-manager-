@@ -19,18 +19,21 @@ class InstagramSerializer(serializers.ModelSerializer):
             "followers_count",
             "following_count",
         ]
+        extra_kwargs = {
+            'instagram_access_token': {'write_only': True},
+        }
 
     def validate(self, attrs):
         view_action = self.context.get('view_action')
 
         if view_action == "connect_to_instgram_account":
             instagram_id = attrs.get("instagram_id")
-            user_access_token =self.context.get('data')["user_access_token"]
+            user_access_token =self.context.get('data')["access_token"]
             if not user_access_token:
                     raise serializers.ValidationError({user_access_token:f"This field {user_access_token} is required."})
             # user_access_token = attrs.get("user_access_token")
             allowed_fields = { "instagram_id",}
-            print(f"3 data:{ self.context.get('data')["user_access_token"]}")
+            print(f"3 data:{ self.context.get('data')["access_token"]}")
             print(f"4 instagram_id:{ instagram_id}")
 
             for field in allowed_fields:
